@@ -14,9 +14,14 @@
 	}
 
 	public void CrabWalk(int[] crabs) {
-		int[] cheap = new int[crabs.Count()];
-		int[] expensive = new int[crabs.Count()];
-		for (int i = 0; i < crabs.Count(); i++) {
+		int min = crabs.Min();
+		int max = crabs.Max();
+
+		int[] cheap = new int[max-min];
+		int[] expensive = new int[max-min];
+
+
+		for (int i = min; i < max; i++) {
 			for (int b = 0; b < crabs.Count(); b++) {
 				int stepSize = Math.Abs(crabs[b] - i);
 				cheap[i] += stepSize;

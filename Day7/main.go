@@ -16,10 +16,19 @@ func main() {
 	}
 
 	crabs := slice.StringToInt(strings.Split(string(raw), ","))
-	cheap := make([]int, len(crabs))
-	exp := make([]int, len(crabs))
+	cc, cp, ec, ep := CrabWalk(crabs)
 
-	for i := 0; i < len(crabs); i++ {
+	fmt.Printf("Part 1: Move all crabs to %d at cost %d\n", cp, cc)
+	fmt.Printf("Part 2: Move all crabs to %d at cost %d\n", ep, ec)
+}
+
+func CrabWalk(crabs []int) (int, int, int, int) {
+	max := maxInt(crabs)
+	min := minInt(crabs)
+	cheap := make([]int, max-min)
+	exp := make([]int, max-min)
+
+	for i := min; i < max; i++ {
 		for c := 0; c < len(crabs); c++ {
 			step := abs(crabs[c] - i)
 			cheap[i] += step
@@ -40,9 +49,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Part 1: Move all crabs to %d at cost %d\n", cp, cc)
-	fmt.Printf("Part 2: Move all crabs to %d at cost %d\n", ep, ec)
-
+	return cc, cp, ec, ep
 }
 
 func abs(in int) int {
@@ -51,4 +58,35 @@ func abs(in int) int {
 	}
 
 	return in
+}
+
+func maxInt(search []int) int {
+	max := 0
+	for i := 0; i < len(search); i++ {
+		if max < search[i] {
+			max = search[i]
+		}
+	}
+
+	return max
+}
+
+func minInt(search []int) int {
+	if len(search) == 0 {
+		return 0
+	}
+
+	if len(search) == 1 {
+		return search[0]
+	}
+
+	min := search[0]
+
+	for i := 0; i < len(search); i++ {
+		if min > search[i] {
+			min = search[i]
+		}
+	}
+
+	return min
 }

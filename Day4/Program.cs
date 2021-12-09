@@ -87,9 +87,11 @@
 		int remaining = boards.Count();
 		bool[] winners = new bool[boards.Count()];
 		int lastWin = -1;
+		int lastCall = -1;
 		int active = boards.Count();
 
 		foreach (int call in calls) {
+			lastCall = call;
 			for (int i = 0; i < boards.Count(); i++) {
 				if (winners[i]) {
 					continue;
@@ -114,6 +116,9 @@
 			Console.WriteLine("No Last Winner Found");
 			return;
 		}
+
+		Console.WriteLine($"Part 2: Call: {lastCall} Sum: {boards[lastWin].USum} Product: {lastCall*boards[lastWin].USum}");
+		return;
 	}
 };
 

@@ -2,7 +2,7 @@
 {
 	public static class Day12 {
 		public static void Main() {
-			// Part1();
+			Part1();
 			Part2();
 		}
 

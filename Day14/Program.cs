@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace AdventOfCode.Day14
+﻿namespace AdventOfCode.Day14
 {
 	public static class Day14 {
 
@@ -11,11 +9,11 @@ namespace AdventOfCode.Day14
 			var template = InputParser.Parse(inputFile, x => x).First();
 
 			var rules = new Dictionary<string, char>();
-			int i = 0;
+			int lineNum = 0;
 
 			foreach (string line in InputParser.Parse(inputFile, x => x)) {
-				if (i < 2) {
-					i++;
+				if (lineNum < 2) {
+					lineNum++;
 					continue;
 				}
 
@@ -23,74 +21,71 @@ namespace AdventOfCode.Day14
 				rules.Add(rule[0], rule[1][0]);
 			}
 
-			Part1(template, rules);
-			Part2(template, rules);
-		}
+			Dictionary<string, long> polymer = new();
 
-		private static void Part1(string template, Dictionary<string, char> rules) {
-			var after = insert(template, rules, 10);
-
-
-			var counts = new Dictionary<char, int>();
-			foreach (char c in after) {
-				if(!counts.ContainsKey(c)) {
-					counts.Add(c, 0);
+			for (int i = 0; i < template.Count()-1; i++) {
+				var key = $"{template[i]}{template[i+1]}";
+				if(!polymer.ContainsKey(key)) {
+					polymer.Add(key, 0);
 				}
 
-				counts[c]++;
+				polymer[key]++;
 			}
+
+			for (int step = 0; step < 40; step++) {
+				Dictionary<string, long> next = new();
+				foreach (KeyValuePair<string, long> kp in polymer) {
+					if (rules.ContainsKey(kp.Key)) {
+						char c = rules[kp.Key];
+						var key = $"{kp.Key[0]}{c}";
+						if(!next.ContainsKey(key)) {
+							next.Add(key, 0);
+						}
+
+						next[key] += kp.Value;
+
+						key = $"{c}{kp.Key[1]}";
+						if(!next.ContainsKey(key)) {
+							next.Add(key, 0);
+						}
+
+						next[key] += kp.Value;
+					} else if (!next.ContainsKey(kp.Key)) {
+						next.Add(kp.Key, kp.Value);
+					} else {
+						next[kp.Key] += kp.Value;
+					}
+				}
+
+				polymer = next;
+
+				// foreach (KeyValuePair<string, int> kp in polymer) {
+				// 	Console.WriteLine($"{kp.Key}: {kp.Value}");
+				// }
+				// Console.WriteLine();
+			}
+
+			Dictionary<char, long> counts = new();
+			foreach (KeyValuePair<string, long> kp in polymer) {
+				if (!counts.ContainsKey(kp.Key[0])) {
+					counts.Add(kp.Key[0], 0);
+				}
+				counts[kp.Key[0]]+= kp.Value;
+			}
+
+			var last = template[template.Count()-1];
+			if(!counts.ContainsKey(last)) {
+				counts.Add(last, 0);
+			}
+
+			counts[last] += 1;
+
+			// foreach (KeyValuePair<char, int> kp in counts) {
+			// 	Console.WriteLine($"{kp.Key}: {kp.Value}");
+			// }
+			// Console.WriteLine();
 
 			Console.WriteLine($"Part 1: {counts.Values.Max()} - {counts.Values.Min()} = {counts.Values.Max() - counts.Values.Min()}");
-		}
-
-		private static void Part2(string template, Dictionary<string, char> rules) {
-			var after = insert(template, rules, 40);
-
-
-			var counts = new Dictionary<char, long>();
-			foreach (char c in after) {
-				if(!counts.ContainsKey(c)) {
-					counts.Add(c, 0);
-				}
-
-				counts[c]++;
-			}
-
-			Console.WriteLine($"Part 2: {counts.Values.Max()} - {counts.Values.Min()} = {counts.Values.Max() - counts.Values.Min()}");
-		}
-
-		private static string insert(string template, Dictionary<string, char> rules, int steps) {
-			string output = "";
-			for (int step = 0; step < steps; step++) {
-				Stopwatch clock = Stopwatch.StartNew();
-				for (int i = 0; true; i++) {
-					if (i >= template.Count()) {
-						break;
-					}
-
-					output += template[i];
-
-					if (i + 1 >= template.Count()) {
-						break;
-					}
-
-					var check = template.Substring(i, 2);
-					if (rules.ContainsKey(check)) {
-						output += rules[check];
-					}
-				}
-
-				template = output;
-				output = "";
-
-				clock.Stop();
-				Console.WriteLine($"After Step {step+1}: {template.Count()} {clock.Elapsed}");
-			}
-
-			return template;
-		}
-
-		private static void Part2() {
 		}
 	}
 }

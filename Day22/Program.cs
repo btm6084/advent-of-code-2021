@@ -22,10 +22,14 @@
 
 			List<List<int>> overlaps;
 
+			List<Cube> wholeCubes;
+
 			public Reactor(string[] inputs, bool p1) {
 				cubes = new();
+				wholeCubes = new();
 
 				for (int i = 0; i < inputs.Length; i++) {
+					Console.WriteLine($"Cube {i} of {inputs.Length}");
 					var pieces = inputs[i].Split(" ");
 					var val = pieces[0] == "on" ? 1:0;
 					var ranges = pieces[1].Split(",");
@@ -45,18 +49,40 @@
 					var maxZ = int.Parse(zRange[1]);
 					if (p1 && (maxZ > 50 || minZ < -50)) { continue ; }
 
-					for (int z = minZ; z <= maxZ; z++) {
-						cubes.Add(new Cube(minX, minY, z, maxX, maxY, z, val));
+					wholeCubes.Add(new Cube(minX, minY, minZ, maxX, maxY, maxZ, val));
+				}
+
+				ulong sum = 0;
+
+				for (int i = 0; i < wholeCubes.Count(); i++) {
+					var found = false;
+					var wc = wholeCubes[i];
+
+					for (int j = 0; j < wholeCubes.Count(); j++) {
+						if (i == j) { continue; }
+
+						if(wholeCubes[i].Overlap(wholeCubes[j])) {
+							found = true;
+							for (int z = wc.minZ; z <= wc.maxZ; z++) {
+								cubes.Add(new Cube(wc.minX, wc.minY, z, wc.maxX, wc.maxY, z, wc.val));
+							}
+
+							break;
+						}
+					}
+
+					if (!found) {
+						Console.WriteLine($"No overlap: {i}");
+						if (wc.val == 1) {
+							sum += wc.volume;
+						}
 					}
 				}
 
-				Console.WriteLine($"Done Processing Cubes: {cubes.Count()}");
-
 				overlaps = new();
-
 				for (int i = 0; i < cubes.Count(); i++) {
 					if (i % 10000 == 0) {
-						Console.WriteLine($"Computing Overlap {i} of {cubes.Count()}");
+						Console.WriteLine($"Computing Overlap {i} of {cubes.Count()} [{cubes.Count()}]");
 					}
 
 					if (overlaps.Count() == 0) {
@@ -92,7 +118,6 @@
 
 				Console.WriteLine($"Cubes: {cubes.Count()} Overlap Groups: {overlaps.Count()}");
 
-				ulong sum = 0;
 				for (int i = 0; i < overlaps.Count(); i++) {
 					sum += sumGroup(cubes, overlaps[i]);
 				}
@@ -166,10 +191,8 @@
 
 			// All cubes are X by Y by 1.
 			public bool Overlap(Cube other) {
-				if (minZ != maxZ) { Console.WriteLine("PANIC"); return false; }
-
-				if (minZ != other.minZ) { return false; }
-				if (maxZ != other.maxZ) { return false; }
+				if (maxZ < other.minZ) { return false; }
+				if (minZ > other.maxZ) { return false; }
 
 				if (maxX < other.minX) { return false; }
 				if (minX > other.maxX) { return false; }

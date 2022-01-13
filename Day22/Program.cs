@@ -29,7 +29,6 @@
 				wholeCubes = new();
 
 				for (int i = 0; i < inputs.Length; i++) {
-					Console.WriteLine($"Cube {i} of {inputs.Length}");
 					var pieces = inputs[i].Split(" ");
 					var val = pieces[0] == "on" ? 1:0;
 					var ranges = pieces[1].Split(",");

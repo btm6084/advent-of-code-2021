@@ -13,7 +13,7 @@
 		}
 
 		public static void Part2() {
-			string[] inputs = InputParser.Parse("./input.real.txt", x => x).ToArray();
+			string[] inputs = InputParser.Parse("./input.example.txt", x => x).ToArray();
 			var reactor = new Reactor(inputs, false);
 		}
 
@@ -137,34 +137,6 @@
 
 				return sum + (ulong)overlap.LongCount();
 
-			}
-
-			public static ulong sumGroup(List<Cube> cubes, List<int> group) {
-				if (group.Count() == 1) {
-					return cubes[group[0]].val == 1 ? cubes[group[0]].volume : 0;
-				}
-
-				Dictionary<(int x, int y), bool> overlap = new();
-
-				for (int c = 0; c < group.Count(); c++) {
-					var cube = cubes[group[c]];
-
-					for (int x = cube.minX; x <= cube.maxX; x++) {
-						for (int y = cube.minY; y <= cube.maxY; y++) {
-							var key = (x: x, y: y);
-
-							if(cube.val == 1 && !overlap.ContainsKey(key)) {
-								overlap.Add(key, true);
-							}
-
-							if(cube.val == 0 && overlap.ContainsKey(key)) {
-								overlap.Remove(key);
-							}
-						}
-					}
-				}
-
-				return (ulong)overlap.LongCount();
 			}
 		}
 

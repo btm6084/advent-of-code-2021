@@ -22,11 +22,8 @@
 
 			List<List<int>> overlaps;
 
-			List<Cube> wholeCubes;
-
 			public Reactor(string[] inputs, bool p1) {
 				cubes = new();
-				wholeCubes = new();
 
 				for (int i = 0; i < inputs.Length; i++) {
 					var pieces = inputs[i].Split(" ");
@@ -48,42 +45,13 @@
 					var maxZ = int.Parse(zRange[1]);
 					if (p1 && (maxZ > 50 || minZ < -50)) { continue ; }
 
-					wholeCubes.Add(new Cube(minX, minY, minZ, maxX, maxY, maxZ, val));
+					cubes.Add(new Cube(minX, minY, minZ, maxX, maxY, maxZ, val));
 				}
 
-				ulong sum = 0;
-
-				for (int i = 0; i < wholeCubes.Count(); i++) {
-					var found = false;
-					var wc = wholeCubes[i];
-
-					for (int j = 0; j < wholeCubes.Count(); j++) {
-						if (i == j) { continue; }
-
-						if(wholeCubes[i].Overlap(wholeCubes[j])) {
-							found = true;
-							for (int z = wc.minZ; z <= wc.maxZ; z++) {
-								cubes.Add(new Cube(wc.minX, wc.minY, z, wc.maxX, wc.maxY, z, wc.val));
-							}
-
-							break;
-						}
-					}
-
-					if (!found) {
-						Console.WriteLine($"No overlap: {i}");
-						if (wc.val == 1) {
-							sum += wc.volume;
-						}
-					}
-				}
+				Console.WriteLine($"Cubes: {cubes.Count()}");
 
 				overlaps = new();
 				for (int i = 0; i < cubes.Count(); i++) {
-					if (i % 10000 == 0) {
-						Console.WriteLine($"Computing Overlap {i} of {cubes.Count()} [{cubes.Count()}]");
-					}
-
 					if (overlaps.Count() == 0) {
 						var group = new List<int>();
 						group.Add(i);
@@ -95,10 +63,6 @@
 					for (int og = 0; og < overlaps.Count(); og++) {
 						if (placed) {break;}
 						for (int c = 0; c < overlaps[og].Count(); c++) {
-							if(cubes[i].minZ != cubes[overlaps[og][c]].minZ) {
-								break; // Not in the same Z space, so no point in checking this group.
-							}
-
 							if(cubes[i].Overlap(cubes[overlaps[og][c]])) {
 								overlaps[og].Add(i);
 								placed = true;
@@ -115,13 +79,64 @@
 					}
 				}
 
-				Console.WriteLine($"Cubes: {cubes.Count()} Overlap Groups: {overlaps.Count()}");
-
+				ulong sum = 0;
 				for (int i = 0; i < overlaps.Count(); i++) {
-					sum += sumGroup(cubes, overlaps[i]);
+					Console.WriteLine($"Group {i} of {overlaps.Count()}");
+					sum += inclusiveSum(cubes, overlaps[i]);
 				}
 
-				Console.WriteLine($"Sum: {sum}");
+				Console.WriteLine(sum);
+			}
+
+			public static ulong inclusiveSum(List<Cube> cubes, List<int> group) {
+				if (group.Count() == 1) {
+					return cubes[group[0]].val == 1 ? cubes[group[0]].volume : 0;
+				}
+
+				Dictionary<(int x, int y, int z), bool> overlap = new();
+
+				ulong sum = 0;
+				for (int i = 0; i < group.Count(); i++) {
+					Console.WriteLine($"\tCube {i} of {group.Count()}");
+					var cube = cubes[group[i]];
+
+					for (int x = cube.minX; x <= cube.maxX; x++) {
+						for (int y = cube.minY; y <= cube.maxY; y++) {
+							for (int z = cube.minZ; z <= cube.maxZ; z++) {
+
+								// If this point exists only in this cube in the group, sum it and never touch it again.
+								var shared = false;
+								for(int j = 0; j < group.Count(); j++) {
+									if (i == j) { continue; }
+									if (cubes[group[j]].PointInCube(x, y, z)) {
+										shared = true;
+										break;
+									}
+								}
+
+								// This pixel isn't shared.
+								if (!shared) {
+									sum += (ulong)cube.val;
+									continue;
+								}
+
+								var key = (x: x, y: y, z: z);
+
+								if(cube.val == 1 && !overlap.ContainsKey(key)) {
+									overlap.Add(key, true);
+								}
+
+								if(cube.val == 0 && overlap.ContainsKey(key)) {
+									overlap.Remove(key);
+								}
+							}
+						}
+					}
+
+				}
+
+				return sum + (ulong)overlap.LongCount();
+
 			}
 
 			public static ulong sumGroup(List<Cube> cubes, List<int> group) {
@@ -200,6 +215,10 @@
 				if (minY > other.maxY) { return false; }
 
 				return true;
+			}
+
+			public bool PointInCube(int x, int y, int z) {
+				return (x >= minX && x <= maxX) && (y >= minY && y <= maxY) && (z >= minZ && z <= maxZ);
 			}
 		}
 	}

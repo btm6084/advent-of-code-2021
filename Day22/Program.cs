@@ -2,25 +2,22 @@
 {
 	public static class Day22 {
 		public static void Main() {
-			// Part1();
+			Part1();
 			Part2();
 		}
 
 		public static void Part1() {
 			string[] inputs = InputParser.Parse("./input.real.txt", x => x).ToArray();
 			var reactor = new Reactor(inputs, true);
-
 		}
 
 		public static void Part2() {
-			string[] inputs = InputParser.Parse("./input.example.txt", x => x).ToArray();
+			string[] inputs = InputParser.Parse("./input.real.txt", x => x).ToArray();
 			var reactor = new Reactor(inputs, false);
 		}
 
 		public class Reactor {
 			List<Cube> cubes;
-
-			List<List<int>> overlaps;
 
 			public Reactor(string[] inputs, bool p1) {
 				cubes = new();
@@ -48,53 +45,33 @@
 					cubes.Add(new Cube(minX, minY, minZ, maxX, maxY, maxZ, val));
 				}
 
-				Console.WriteLine($"Cubes: {cubes.Count()}");
+				Console.WriteLine(ScoreGroup(cubes, 0));
+			}
 
-				overlaps = new();
-				for (int i = 0; i < cubes.Count(); i++) {
-					if (overlaps.Count() == 0) {
-						var group = new List<int>();
-						group.Add(i);
-						overlaps.Add(group);
-						continue;
-					}
+			public static ulong ScoreGroup(List<Cube> group, int depth) {
+				ulong sum = 0;
+				List<Cube> processed = new();
 
-					var placed = false;
-					for (int og = 0; og < overlaps.Count(); og++) {
-						if (placed) {break;}
-						for (int c = 0; c < overlaps[og].Count(); c++) {
-							if(cubes[i].Overlaps(cubes[overlaps[og][c]])) {
-								overlaps[og].Add(i);
-								placed = true;
-								break;
-							}
+				for (int i = 0; i < group.Count(); i++) {
+					var c = group[i];
+
+					List<Cube> overlaps = new();
+
+					foreach(Cube cube in processed) {
+						var o = cube.Overlap(c);
+						if (o != null) {
+							o.val = cube.val;
+							overlaps.Add(o);
 						}
 					}
 
-					if (!placed) {
-						var group = new List<int>();
-						group.Add(i);
-						overlaps.Add(group);
-						continue;
-					}
+					if (c.val == 1) { sum += c.volume; }
+					var score = ScoreGroup(overlaps, depth+1);
+					sum -= score;
+					processed.Add(c);
 				}
 
-				List<List<Cube>> groups = new();
-
-				for (int i = 0; i < overlaps.Count(); i++) {
-					groups.Add(new List<Cube>());
-					for (int j = 0; j < overlaps[i].Count(); j++) {
-						groups[i].Add(cubes[overlaps[i][j]]);
-					}
-				}
-
-				for (int i = 0; i < groups.Count(); i++) {
-					var group = groups[i];
-					Console.WriteLine($"Group {i} {group.Count()}");
-					for (int j = 0; j < group.Count(); j++) {
-						Console.WriteLine($"\t {group[j].Print()}");
-					}
-				}
+				return sum;
 			}
 		}
 
@@ -133,7 +110,6 @@
 				volume = (ulong)xLen * (ulong)yLen * (ulong)zLen;
 			}
 
-			// All cubes are X by Y by 1.
 			public bool Overlaps(Cube other) {
 				if (maxZ < other.minZ) { return false; }
 				if (minZ > other.maxZ) { return false; }
@@ -147,12 +123,40 @@
 				return true;
 			}
 
+			public Cube? Overlap(Cube b) {
+				if (!Overlaps(b)) {
+					return null;
+				}
+
+				var c = new Cube(
+					Math.Max(minX, b.minX),
+					Math.Max(minY, b.minY),
+					Math.Max(minZ, b.minZ),
+					Math.Min(maxX, b.maxX),
+					Math.Min(maxY, b.maxY),
+					Math.Min(maxZ, b.maxZ),
+					val
+				);
+
+				return c;
+			}
+
+			public bool Same(Cube b) {
+				return
+				(minX == b.minX) &&
+				(minY == b.minY) &&
+				(minZ == b.minZ) &&
+				(maxX == b.maxX) &&
+				(maxY == b.maxY) &&
+				(maxZ == b.maxZ);
+			}
+
 			public bool PointInCube(int x, int y, int z) {
 				return (x >= minX && x <= maxX) && (y >= minY && y <= maxY) && (z >= minZ && z <= maxZ);
 			}
 
 			public string Print() {
-				return $"[{minX,6},{minY,6},{minZ,6}] [{maxX,6},{maxY,6},{maxZ,6}] ({val})";
+				return $"[{minX,6},{minY,6},{minZ,6}] [{maxX,6},{maxY,6},{maxZ,6}] ({volume})";
 			}
 		}
 	}
